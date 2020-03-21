@@ -4,7 +4,7 @@ import os
 from parse_dict import get_dict
 
 # base dir for multiple text datasets
-base_dir = '/opt/data/nfs/zhangjinjin/data/text/'
+base_dir = '../data/'
 
 # font path for visualization
 font_path = './fonts/cn/SourceHanSans-Normal.ttf'
@@ -20,7 +20,7 @@ summary_path = './checkpoint'
 name_scope = 'InceptionV4'
 
 # path for numpy dict with processed image paths and labels used in dataset.py
-dataset_name = 'icdar_datasets.npy'
+dataset_name = 'dy_datasets.npy'
 # pb_path = './checkpoint/text_recognition_5435.pb'
 
 # restore training parameters
@@ -36,7 +36,7 @@ label_dict = get_dict()
 reverse_label_dict = dict((v,k) for k,v in label_dict.items())
 
 # gpu lists
-gpus = [6, 7, 8, 9]
+gpus = [1]
 
 num_gpus = len(gpus)
 num_classes = len(label_dict)
@@ -70,22 +70,22 @@ MAX_SIZE = image_size - 32
 batch_size = 10 #12
 
 # steps per training epoch in tensorpack
-steps_per_epoch = 500
+steps_per_epoch = 100
 
 # max epochs 
-num_epochs = 1000
+num_epochs = 50
 
 # model weight decay factor
 weight_decay = 1e-5
 
 # base learning rate
-learning_rate = 1e-4 * num_gpus
+learning_rate = 5e-4 * num_gpus
 
 # minimun learning rate for cosine decay learning rate
 min_lr = learning_rate / 100
 
 # warm up steps 
-warmup_steps = 1000
+warmup_steps = 100
 
 # thread for multi-thread data loading  
 num_threads = 16

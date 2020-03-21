@@ -24,10 +24,13 @@ font_path = cfg.font_path
 dataset_path = {  'art': os.path.join(base_dir, 'art/train_task2_images'), 
                   'rects': os.path.join(base_dir, 'rects/img'),
                   'lsvt': os.path.join(base_dir, 'lsvt/train'),
-                  'icdar2017rctw': os.path.join(base_dir, 'icdar2017rctw/train'), } 
+                  'icdar2017rctw': os.path.join(base_dir, 'icdar2017rctw/train'), 
+                  'dy': os.path.join(base_dir, 'dy/train'),
+                  'dy_test': os.path.join(base_dir, 'dy/test')} 
 
 lsvt_annotation = os.path.join(base_dir, 'lsvt/train_full_labels.json')
 art_annotation = os.path.join(base_dir, 'art/train_task2_labels.json')
+dy_annotation = os.path.join(base_dir, 'dy/dy_labels.json')
 
 
 
@@ -381,25 +384,110 @@ class ICDAR2017RCTW(Dataset):
                         self.points.append(polygon)
                         self.transcripts.append(label)
 
+class DY(Dataset):
+    """
+    DingYu Dataset
+    """
+    def __init__(self, name='dy'):
+        super(DY, self).__init__(name=name)
+        self.transcripts = []
+        
+    def load_data(self, annotation_file=dy_annotation):
+        with open(annotation_file) as f:
+            json_data = json.load(f)
+
+            for filename in os.listdir(self.data_path):
+                img_name = os.path.join(self.data_path, filename)
+                #image = cv2.imread(img_name)
+                #image_height, image_width = image.shape[:2]
+
+                anno_data = json_data.get(filename[:-4], None)
+                if not anno_data:continue # 无标签数据不作为训练集
+                # print(len(json_data[filename[:-4]]))
+                # print(anno_data)
+                points = [anno['points'] for anno in anno_data]
+                transcripts = [anno['transcription'] for anno in anno_data]
+
+                for polygon, transcript in zip(points, transcripts):
+                    if transcript == '###':
+                        continue
+
+                    transcript = preprocess(transcript.strip())
+                
+
+                    if len(transcript)>self.max_len-1:
+                        # print(transcripts)
+                        # count = count + 1
+                        continue
+
+                    skip = False
+                    for char in transcript:
+                        if char not in self.label_dict.keys():
+                            skip = True
+
+                    if skip:
+                        continue
+
+                    # print(polygon, transcripts)
+
+                    seq_label = []     
+                    for char in transcript:
+                        seq_label.append(self.label_dict[char])#.decode('utf-8')
+                    seq_label.append(self.label_dict['EOS'])
+                    
+                    non_zero_count = len(seq_label)
+                    seq_label = seq_label + [self.label_dict['EOS']]*(self.max_len-non_zero_count)
+                    mask = [1]*(non_zero_count) + [0]*(self.max_len-non_zero_count) 
+
+                    points_x = [point[0] for point in polygon]
+                    points_y = [point[1] for point in polygon]
+                    bbox = [min(points_y), min(points_x), max(points_y), max(points_x)] # ymin, xmin, ymax, xmax
+                    bbox = [int(item) for item in bbox]
+                    
+                    bbox_w, bbox_h = bbox[3]-bbox[1], bbox[2]-bbox[0]
+
+                    if bbox_w <8 or bbox_h <8:
+                        continue
+
+#                     print(transcript, seq_label, mask, polygon)
+#                     img = visualization(img_name, polygon, transcript)
+#                     plt.imshow(img)
+#                     plt.show()  
+                    self.filenames.append(img_name)
+                    self.labels.append(seq_label)
+                    self.masks.append(mask)
+                    self.bboxes.append(bbox)
+                    self.points.append(polygon)                        
+                    self.transcripts.append(transcripts)
+
 if __name__=='__main__':
-    LSVT = LSVT()
-    LSVT.load_data() 
-    print(len(LSVT.filenames))
+#     LSVT = LSVT()
+#     LSVT.load_data() 
+#     print(len(LSVT.filenames))
 
-    ART = ART()
-    ART.load_data()
-    print(len(ART.filenames))
+#     ART = ART()
+#     ART.load_data()
+#     print(len(ART.filenames))
 
-    ReCTS = ReCTS()
-    ReCTS.load_data()
-    print(len(ReCTS.filenames))
+#     ReCTS = ReCTS()
+#     ReCTS.load_data()
+#     print(len(ReCTS.filenames))
     
-    filenames = LSVT.filenames + ART.filenames + ReCTS.filenames
-    labels = LSVT.labels + ART.labels + ReCTS.labels
-    masks = LSVT.masks + ART.masks + ReCTS.masks
-    bboxes = LSVT.bboxes + ART.bboxes + ReCTS.bboxes
-    points = LSVT.points + ART.points + ReCTS.points
-
+#     filenames = LSVT.filenames + ART.filenames + ReCTS.filenames
+#     labels = LSVT.labels + ART.labels + ReCTS.labels
+#     masks = LSVT.masks + ART.masks + ReCTS.masks
+#     bboxes = LSVT.bboxes + ART.bboxes + ReCTS.bboxes
+#     points = LSVT.points + ART.points + ReCTS.points
+    
+    DY = DY()
+    DY.load_data()
+    print(len(DY.filenames))
+    filenames = DY.filenames
+    labels = DY.labels
+    masks = DY.masks
+    bboxes = DY.bboxes
+    points = DY.points
+    
     from sklearn.utils import shuffle
     filenames, labels, masks, bboxes, points = shuffle(filenames, labels, masks, bboxes, points, random_state=0)
     print(len(filenames))

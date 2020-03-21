@@ -117,8 +117,8 @@ def eval(args, filenames, polygons, labels, label_dict=cfg.label_dict):
 
         total_time += after - before
         preds, probs = label2str(preds[0], probs[0], label_dict)
-        print(label)
-        print(preds, probs)
+        print('label:',label)
+        print('pred:',preds, probs)
 
         sim = cal_sim(preds, label)
 
@@ -133,10 +133,18 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_path', type=str, help='path to tensorflow model', default='./checkpoint/model-10000')
     args = parser.parse_args()
 
-    from dataset import ICDAR2017RCTW
+#     from dataset import ICDAR2017RCTW
 
-    ICDAR2017RCTW = ICDAR2017RCTW()
-    ICDAR2017RCTW.load_data() 
-    print(len(ICDAR2017RCTW.filenames))
+#     ICDAR2017RCTW = ICDAR2017RCTW()
+#     ICDAR2017RCTW.load_data() 
+#     print(len(ICDAR2017RCTW.filenames))
 
-    eval(args, ICDAR2017RCTW.filenames, ICDAR2017RCTW.points, ICDAR2017RCTW.transcripts)
+#     eval(args, ICDAR2017RCTW.filenames, ICDAR2017RCTW.points, ICDAR2017RCTW.transcripts)
+    
+    from dataset import DY
+
+    DY = DY()
+    DY.load_data()
+    print(len(DY.filenames))
+
+    eval(args, DY.filenames, DY.points, DY.transcripts)

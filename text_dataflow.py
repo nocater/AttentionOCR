@@ -162,7 +162,7 @@ def get_roidb(dataset_name):
     """
     Load generated numpy dataset for tensorpack dataflow.
     """
-    dataset = np.load(dataset_name)[()]
+    dataset = np.load(dataset_name,allow_pickle=True)[()]
     filenames, labels, masks, bboxes, points = dataset["filenames"], dataset["labels"], dataset["masks"], dataset["bboxes"], dataset["points"]
 
     roidb = []
